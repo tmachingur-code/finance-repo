@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="PesaFlow validation test results">
+  <title>PesaFlow | Validation Tests</title>
+
+  <style>
+    :root {
+      font-family: Arial, Helvetica, sans-serif;
+      color: #14233f;
+      background: #f4f6fa;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      max-width: 850px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    main {
+      padding: 28px;
+      background: #ffffff;
+      border: 1px solid #dce2ec;
+      border-radius: 16px;
+    }
+
+    h1 {
+      margin-top: 0;
+    }
+
+    .brand {
+      color: #b38b3d;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+
+    #test-summary {
+      padding: 14px;
+      background: #f4f6fa;
+      border-radius: 8px;
+      font-weight: 700;
+    }
+
+    #test-results {
+      padding-left: 22px;
+    }
+
+    #test-results li {
+      margin: 12px 0;
+      overflow-wrap: anywhere;
+    }
+
+    .test-pass {
+      color: #17663a;
+    }
+
+    .test-fail {
+      color: #b42318;
+    }
+
+    a {
+      color: #142f59;
+    }
+
+    a:focus-visible {
+      outline: 3px solid #b38b3d;
+      outline-offset: 4px;
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 12px;
+      }
+
+      main {
+        padding: 18px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <p class="brand">PesaFlow</p>
+    <h1>Validation Test Results</h1>
+    <p>
+      These tests check descriptions, amounts, categories, dates,
+      and complete transactions.
+    </p>
+
+    <p id="test-summary" role="status" aria-live="polite">
+      Running tests...
+    </p>
+
+    <h2>Individual tests</h2>
+    <ul id="test-results"></ul>
+
+    <p>
+      <a href="../index.html">Return to the Student Finance Tracker</a>
+    </p>
+  </main>
+
+  <script type="module" src="./validators.test.js"></script>
+</body>
+</html>

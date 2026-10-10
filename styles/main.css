@@ -1,4 +1,3 @@
-
 :root {
   color-scheme: light;
   --navy-950: #0d1b34;
@@ -286,7 +285,7 @@ h3 {
   font-size: 0.83rem;
 }
 
-.user-details > span {
+.user-details>span {
   color: #c8d3e3;
   font-size: 0.75rem;
 }
@@ -355,7 +354,7 @@ h3 {
   letter-spacing: -0.04em;
 }
 
-.mobile-brand-text > span {
+.mobile-brand-text>span {
   margin-top: 3px;
   color: var(--muted);
   font-size: 0.65rem;
@@ -723,10 +722,21 @@ a:focus-visible {
   background: #e9edf3;
 }
 
-.chart-gridline:nth-child(1) { top: 0; }
-.chart-gridline:nth-child(2) { top: 33.33%; }
-.chart-gridline:nth-child(3) { top: 66.66%; }
-.chart-gridline:nth-child(4) { bottom: 0; }
+.chart-gridline:nth-child(1) {
+  top: 0;
+}
+
+.chart-gridline:nth-child(2) {
+  top: 33.33%;
+}
+
+.chart-gridline:nth-child(3) {
+  top: 66.66%;
+}
+
+.chart-gridline:nth-child(4) {
+  bottom: 0;
+}
 
 .chart-bars {
   position: relative;
@@ -839,7 +849,7 @@ a:focus-visible {
   border-bottom: 0;
 }
 
-.budget-line > span {
+.budget-line>span {
   color: var(--muted);
   font-size: 0.8rem;
 }
@@ -926,7 +936,7 @@ a:focus-visible {
   background: #fbfcfe;
 }
 
-.transaction-search > span {
+.transaction-search>span {
   color: var(--navy-800);
   font-size: 1.5rem;
 }
@@ -1230,6 +1240,7 @@ a:focus-visible {
     transform: scaleY(0.2);
     opacity: 0.5;
   }
+
   to {
     transform: scaleY(1);
     opacity: 1;
@@ -1441,7 +1452,7 @@ a:focus-visible {
     text-align: center;
   }
 
-  .mobile-nav-link > span:first-child {
+  .mobile-nav-link>span:first-child {
     font-size: 1.35rem;
     line-height: 1.1;
   }
@@ -1461,7 +1472,7 @@ a:focus-visible {
     font-weight: 700;
   }
 
-  .mobile-add-link > span:first-child {
+  .mobile-add-link>span:first-child {
     display: grid;
     place-items: center;
     width: 52px;
@@ -1477,7 +1488,7 @@ a:focus-visible {
     transition: transform var(--ease);
   }
 
-  .mobile-add-link:hover > span:first-child {
+  .mobile-add-link:hover>span:first-child {
     transform: translateY(-2px);
   }
 
@@ -1520,7 +1531,7 @@ a:focus-visible {
     font-size: 1.05rem;
   }
 
-  .mobile-brand-text > span {
+  .mobile-brand-text>span {
     font-size: 0.58rem;
   }
 
@@ -1685,7 +1696,7 @@ a:focus-visible {
     padding: 8px 0;
   }
 
-  .budget-line > span,
+  .budget-line>span,
   .budget-line strong {
     font-size: 0.68rem;
   }
@@ -1749,7 +1760,7 @@ a:focus-visible {
     font-size: 0.78rem;
   }
 
-  .mobile-empty-state > span:not(.empty-icon) {
+  .mobile-empty-state>span:not(.empty-icon) {
     color: var(--muted);
   }
 
@@ -1795,11 +1806,11 @@ a:focus-visible {
     font-size: 0.6rem;
   }
 
-  .mobile-nav-link > span:first-child {
+  .mobile-nav-link>span:first-child {
     font-size: 1.25rem;
   }
 
-  .mobile-add-link > span:first-child {
+  .mobile-add-link>span:first-child {
     width: 48px;
     height: 48px;
     margin-top: -23px;
@@ -1822,7 +1833,7 @@ a:focus-visible {
     font-size: 0.95rem;
   }
 
-  .mobile-brand-text > span {
+  .mobile-brand-text>span {
     font-size: 0.52rem;
   }
 
@@ -1891,7 +1902,7 @@ a:focus-visible {
     width: 94px;
   }
 
-  .budget-line > span,
+  .budget-line>span,
   .budget-line strong {
     font-size: 0.63rem;
   }
@@ -1920,6 +1931,7 @@ a:focus-visible {
 /* Accessibility: respect reduced-motion preference */
 
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {
@@ -1946,4 +1958,41 @@ a:focus-visible {
 
 .mobile-brand .brand-flow {
   color: var(--gold-600);
+}
+
+/* M3: Accessible form validation feedback */
+.field-error {
+  display: block;
+  min-height: 1.2rem;
+  margin-top: 4px;
+  color: #b42318;
+  font-size: 0.85rem;
+}
+
+input[aria-invalid="true"],
+select[aria-invalid="true"] {
+  border-color: #b42318;
+}
+
+#form-feedback {
+  margin-top: 12px;
+  font-weight: 600;
+  color: var(--navy-900);
+}
+
+#form-feedback:empty {
+  display: none;
+}
+
+/* Required field indicator */
+.required-star {
+  color: #b42318;
+  font-weight: 800;
+  margin-left: 3px;
+}
+
+/*Keep invalid fields easy to identify while focused */
+input[aria-invalid="true"]:focus-visible,
+select[aria-invalid="true"]:focus-visible {
+  outline-color: #b42318;
 }
