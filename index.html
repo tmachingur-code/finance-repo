@@ -4,341 +4,443 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <meta
-    name="description"
-    content="PesaFlow helps students track income, expenses, transactions and budgets."
-  >
-
+  <meta name="theme-color" content="#102849">
+  <meta name="description" content="PesaFlow helps students track income, expenses, budgets and financial goals.">
   <title>PesaFlow | Student Finance Tracker</title>
-
   <link rel="stylesheet" href="styles/main.css">
 </head>
-
 <body>
   <a class="skip-link" href="#main-content">Skip to main content</a>
 
-  <header class="site-header">
-    <a class="brand" href="#dashboard" aria-label="PesaFlow home">
-      <span class="brand-mark" aria-hidden="true">P</span>
-      <span class="brand-text">
-        <strong>PesaFlow</strong>
-        <span>Student Finance Tracker</span>
+  <!-- Desktop sidebar -->
+  <aside class="sidebar" aria-label="Sidebar navigation">
+    <a class="sidebar-brand" href="#dashboard" aria-label="PesaFlow dashboard">
+      <span class="brand-symbol" aria-hidden="true">
+        <svg viewBox="0 0 48 48" fill="none">
+          <rect x="5" y="25" width="9" height="18" rx="2" fill="currentColor"/>
+          <rect x="19" y="15" width="9" height="28" rx="2" fill="currentColor"/>
+          <rect x="33" y="5" width="9" height="38" rx="2" fill="currentColor"/>
+        </svg>
       </span>
+      <span class="sidebar-brand-name"><span class="brand-pesa">Pesa</span><span class="brand-flow">Flow</span></span>
+      <span class="sidebar-brand-subtitle">Student Finance Tracker</span>
     </a>
 
-    <nav class="desktop-nav" aria-label="Main navigation">
-      <a class="nav-link active" href="#dashboard" aria-current="page">Dashboard</a>
-      <a class="nav-link" href="#transactions">Transactions</a>
-      <a class="nav-link" href="#add-transaction">Add transaction</a>
-      <a class="nav-link" href="#settings">Settings</a>
-      <a class="nav-link" href="#about">About</a>
+    <nav class="sidebar-nav" aria-label="Main navigation">
+      <a class="sidebar-link active" href="#dashboard" aria-current="page">
+        <span class="nav-icon" aria-hidden="true">⌂</span>
+        <span>Dashboard</span>
+      </a>
+      <a class="sidebar-link" href="#transactions">
+        <span class="nav-icon" aria-hidden="true">▤</span>
+        <span>Transactions</span>
+      </a>
+      <a class="sidebar-link" href="#add-transaction">
+        <span class="nav-icon add-nav-icon" aria-hidden="true">+</span>
+        <span>Add Transaction</span>
+      </a>
+      <a class="sidebar-link" href="#settings">
+        <span class="nav-icon" aria-hidden="true">⚙</span>
+        <span>Settings</span>
+      </a>
+      <a class="sidebar-link" href="#about">
+        <span class="nav-icon" aria-hidden="true">ⓘ</span>
+        <span>About</span>
+      </a>
     </nav>
 
-    <div class="header-meta">
-      <span class="currency-label">Currency: RWF</span>
-      <span class="profile-mark" aria-hidden="true">S</span>
-      <span class="profile-name">Student</span>
+    <div class="sidebar-bottom">
+      <div class="sidebar-user">
+        <span class="avatar" aria-hidden="true">S</span>
+        <span class="user-details">
+          <strong>Student User</strong>
+          <span>Personal account</span>
+        </span>
+      </div>
+      <p class="sidebar-note">Your money. Your decisions.</p>
     </div>
-  </header>
+  </aside>
 
-  <main id="main-content">
-    <section id="dashboard" class="dashboard-section"
-      aria-labelledby="dashboard-title">
+  <div class="app-shell">
+    <!-- Responsive header -->
+    <header class="topbar">
+      <a class="mobile-brand" href="#dashboard" aria-label="PesaFlow dashboard">
+        <span class="mobile-brand-icon" aria-hidden="true">
+          <svg viewBox="0 0 48 48" fill="none">
+            <rect x="5" y="25" width="9" height="18" rx="2" fill="currentColor"/>
+            <rect x="19" y="15" width="9" height="28" rx="2" fill="currentColor"/>
+            <rect x="33" y="5" width="9" height="38" rx="2" fill="currentColor"/>
+          </svg>
+        </span>
+        <span class="mobile-brand-text">
+          <strong><span class="brand-pesa">Pesa</span><span class="brand-flow">Flow</span></strong>
+          <span>Student Finance Tracker</span>
+        </span>
+      </a>
 
-      <div class="page-heading">
-        <div>
-          <p class="eyebrow">YOUR MONEY, MADE CLEAR</p>
-          <h1 id="dashboard-title">Your financial overview</h1>
-          <p class="section-description">
-            Understand your spending and make every franc count.
-          </p>
-        </div>
+      <form class="global-search" role="search" action="#transactions">
+        <label class="visually-hidden" for="global-search-input">Search financial transactions</label>
+        <span class="search-icon" aria-hidden="true">⌕</span>
+        <input id="global-search-input" type="search" placeholder="Search transactions (regex supported)...">
+      </form>
 
-        <a class="button button-primary" href="#add-transaction">
-          <span aria-hidden="true">+</span> Add transaction
+      <div class="topbar-actions">
+        <span class="today-label">Your finances, at a glance</span>
+        <button class="icon-button" type="button" aria-label="Notifications">
+          <span aria-hidden="true">♧</span>
+          <span class="notification-dot" aria-hidden="true"></span>
+        </button>
+        <a class="icon-button" href="#settings" aria-label="Open settings">
+          <span aria-hidden="true">⚙</span>
+        </a>
+        <a class="button button-primary topbar-add" href="#add-transaction">
+          <span aria-hidden="true">+</span>
+          Add Transaction
         </a>
       </div>
+    </header>
 
-      <div class="summary-grid" aria-label="Financial summary">
-        <article class="summary-card income-card">
-          <div class="card-icon" aria-hidden="true">↓</div>
+    <main id="main-content">
+      <!-- Dashboard -->
+      <section id="dashboard" class="dashboard-section" aria-labelledby="welcome-title">
+        <div class="welcome-row">
           <div>
-            <p class="card-label">Total income</p>
-            <p class="card-value">RWF 0</p>
-            <p class="card-note">Completed income</p>
+            <p class="eyebrow">YOUR PERSONAL FINANCE SPACE</p>
+            <h1 id="welcome-title">Welcome back!</h1>
+            <p class="welcome-description">Here's your spending overview for this week.</p>
           </div>
-        </article>
-
-        <article class="summary-card expense-card">
-          <div class="card-icon" aria-hidden="true">↑</div>
-          <div>
-            <p class="card-label">Total expenses</p>
-            <p class="card-value">RWF 0</p>
-            <p class="card-note">Completed expenses</p>
-          </div>
-        </article>
-
-        <article class="summary-card budget-card">
-          <div class="card-icon" aria-hidden="true">◎</div>
-          <div>
-            <p class="card-label">Remaining budget</p>
-            <p class="card-value">RWF 0</p>
-            <p class="card-note">Budget not configured</p>
-          </div>
-        </article>
-
-        <article class="summary-card category-card">
-          <div class="card-icon" aria-hidden="true">◇</div>
-          <div>
-            <p class="card-label">Top spending category</p>
-            <p class="card-value">No data yet</p>
-            <p class="card-note">Your spending insights</p>
-          </div>
-        </article>
-      </div>
-
-      <div class="analytics-grid">
-        <article class="panel trend-panel">
-          <div class="panel-heading">
-            <div>
-              <h2>Spending trend</h2>
-              <p class="muted-text">Your last seven days</p>
-            </div>
-            <span class="panel-symbol" aria-hidden="true">↗</span>
-          </div>
-
-          <div class="chart-placeholder" role="img"
-            aria-label="Spending trend chart placeholder. Chart data will be added in a later milestone.">
-            <div class="chart-bars" aria-hidden="true">
-              <span style="--bar-height: 32%"></span>
-              <span style="--bar-height: 55%"></span>
-              <span style="--bar-height: 40%"></span>
-              <span style="--bar-height: 75%"></span>
-              <span style="--bar-height: 48%"></span>
-              <span style="--bar-height: 62%"></span>
-              <span style="--bar-height: 36%"></span>
-            </div>
-            <div class="chart-labels" aria-hidden="true">
-              <span>Mon</span><span>Tue</span><span>Wed</span>
-              <span>Thu</span><span>Fri</span><span>Sat</span>
-              <span>Sun</span>
-            </div>
-          </div>
-          <p class="chart-caption">
-            Illustrative layout — real spending data comes in M5.
-          </p>
-        </article>
-
-        <article class="panel budget-panel">
-          <div class="panel-heading">
-            <div>
-              <h2>Budget progress</h2>
-              <p class="muted-text">Keep your spending on track</p>
-            </div>
-            <span class="panel-symbol" aria-hidden="true">◎</span>
-          </div>
-
-          <div class="budget-empty-state">
-            <div class="budget-ring" aria-hidden="true">
-              <span>0%</span>
-            </div>
-            <p>Your budget overview will appear here.</p>
-          </div>
-
-          <div class="budget-legend">
-            <span><i class="legend-dot spent-dot"></i>Spent</span>
-            <span><i class="legend-dot remaining-dot"></i>Remaining</span>
-          </div>
-        </article>
-      </div>
-    </section>
-
-    <section id="transactions" class="transactions-section"
-      aria-labelledby="transactions-title">
-
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">YOUR RECORDS</p>
-          <h2 id="transactions-title">Recent transactions</h2>
-          <p class="section-description">
-            Keep track of where your money goes.
-          </p>
-        </div>
-        <span class="record-count">0 records</span>
-      </div>
-
-      <div class="transaction-toolbar">
-        <div class="search-field">
-          <label for="transaction-search">Search transactions</label>
-          <input id="transaction-search" type="search"
-            placeholder="Search descriptions or categories..."
-            autocomplete="off">
-        </div>
-
-        <div class="sort-field">
-          <label for="transaction-sort">Sort by</label>
-          <select id="transaction-sort">
-            <option value="date-desc">Newest first</option>
-            <option value="date-asc">Oldest first</option>
-            <option value="description-asc">Description A–Z</option>
-            <option value="description-desc">Description Z–A</option>
-            <option value="amount-asc">Amount: low to high</option>
-            <option value="amount-desc">Amount: high to low</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="table-wrapper">
-        <table class="transaction-table">
-          <caption>Financial transactions recorded in PesaFlow</caption>
-          <thead>
-            <tr>
-              <th scope="col">Date</th>
-              <th scope="col">Description</th>
-              <th scope="col">Category</th>
-              <th scope="col">Type</th>
-              <th scope="col">Amount</th>
-              <th scope="col">Status</th>
-              <th scope="col">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td colspan="7" class="empty-state">
-                No transactions yet. Add your first transaction to get started.
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <section id="add-transaction" class="form-section"
-      aria-labelledby="form-title">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">NEW RECORD</p>
-          <h2 id="form-title">Add a transaction</h2>
-          <p class="section-description">
-            Record an income or expense.
-          </p>
-        </div>
-      </div>
-
-      <form class="transaction-form">
-        <div class="form-grid">
-          <div class="form-field">
-            <label for="description">Description</label>
-            <input id="description" name="description" type="text"
-              placeholder="e.g. Lunch at cafeteria" required>
-          </div>
-
-          <div class="form-field">
-            <label for="amount">Amount (RWF)</label>
-            <input id="amount" name="amount" type="number"
-              min="0.01" step="0.01" placeholder="e.g. 4500" required>
-          </div>
-
-          <div class="form-field">
-            <label for="type">Transaction type</label>
-            <select id="type" name="type" required>
-              <option value="">Choose a type</option>
-              <option value="income">Income</option>
-              <option value="expense">Expense</option>
-            </select>
-          </div>
-
-          <div class="form-field">
-            <label for="category">Category</label>
-            <select id="category" name="category" required>
-              <option value="">Choose a category</option>
-              <option>Food</option>
-              <option>Books</option>
-              <option>Transport</option>
-              <option>Entertainment</option>
-              <option>Fees</option>
-              <option>Other</option>
-            </select>
-          </div>
-
-          <div class="form-field">
-            <label for="transaction-date">Transaction date</label>
-            <input id="transaction-date" name="date" type="date" required>
-          </div>
-
-          <div class="form-field">
-            <label for="status">Payment status</label>
-            <select id="status" name="status" required>
-              <option value="">Choose a status</option>
-              <option value="paid">Paid / completed</option>
-              <option value="planned">Planned / upcoming</option>
+          <div class="currency-control">
+            <label for="display-currency">Currency</label>
+            <select id="display-currency" name="display-currency">
+              <option value="RWF">RWF</option>
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
             </select>
           </div>
         </div>
 
-        <p class="form-note">
-          Form validation and saving will be implemented in later milestones.
-        </p>
+        <div class="summary-grid" aria-label="Financial summary">
+          <article class="summary-card income-card">
+            <div class="summary-icon" aria-hidden="true">
+              <svg viewBox="0 0 48 48" fill="none">
+                <path d="M24 7V39M11 26L24 39L37 26" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="summary-content">
+              <p class="summary-label">Total Income</p>
+              <p class="summary-value">RWF 0</p>
+              <p class="summary-caption">This month</p>
+            </div>
+          </article>
 
-        <button class="button button-primary" type="button">
-          Save transaction (coming soon)
-        </button>
-      </form>
-    </section>
+          <article class="summary-card expense-card">
+            <div class="summary-icon" aria-hidden="true">
+              <svg viewBox="0 0 48 48" fill="none">
+                <path d="M24 41V9M11 22L24 9L37 22" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="summary-content">
+              <p class="summary-label">Total Expenses</p>
+              <p class="summary-value">RWF 0</p>
+              <p class="summary-caption">This month</p>
+            </div>
+          </article>
 
-    <section id="settings" class="info-section"
-      aria-labelledby="settings-title">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">MAKE IT YOURS</p>
-          <h2 id="settings-title">Settings</h2>
-          <p class="section-description">
-            Configure your preferred currency, budget and categories.
-          </p>
+          <article class="summary-card remaining-card">
+            <div class="summary-icon" aria-hidden="true">
+              <svg viewBox="0 0 48 48" fill="none">
+                <rect x="7" y="12" width="32" height="29" rx="5" stroke="currentColor" stroke-width="3"/>
+                <path d="M7 18H39M31 27H42V35H31A4 4 0 0 1 31 27Z" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>
+                <path d="M11 12L29 6L34 12" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div class="summary-content">
+              <p class="summary-label">Remaining Budget</p>
+              <p class="summary-value">RWF 0</p>
+              <p class="summary-caption">Budget not configured</p>
+            </div>
+          </article>
+
+          <article class="summary-card category-card">
+            <div class="summary-icon" aria-hidden="true">
+              <svg viewBox="0 0 48 48" fill="none">
+                <path d="M7 9H27L42 24L24 42L7 25V9Z" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>
+                <circle cx="17" cy="18" r="3" fill="currentColor"/>
+              </svg>
+            </div>
+            <div class="summary-content">
+              <p class="summary-label">Top Category</p>
+              <p class="summary-value">No data yet</p>
+              <p class="summary-caption">Your spending insights</p>
+            </div>
+          </article>
         </div>
-      </div>
 
-      <div class="info-card">
-        <span class="info-icon" aria-hidden="true">⚙</span>
-        <div>
-          <h3>Personalize your tracker</h3>
-          <p>
-            Currency conversion, budget configuration, data import and export
-            will be available in a later milestone.
-          </p>
+        <!-- Spending chart -->
+        <div class="analytics-grid">
+          <article class="panel trend-panel" aria-labelledby="trend-title">
+            <div class="panel-heading">
+              <div>
+                <h2 id="trend-title">Spending Trend (Last 7 Days)</h2>
+                <p class="panel-subtitle">Daily expense overview</p>
+              </div>
+              <span class="chart-unit">RWF</span>
+            </div>
+
+            <div class="trend-chart" role="img" aria-label="Illustrative seven-day spending chart. Live statistics will be added in M5.">
+              <div class="chart-y-axis" aria-hidden="true">
+                <span>150K</span><span>100K</span><span>50K</span><span>0</span>
+              </div>
+              <div class="chart-main">
+                <div class="chart-plot" aria-hidden="true">
+                  <div class="chart-gridline"></div>
+                  <div class="chart-gridline"></div>
+                  <div class="chart-gridline"></div>
+                  <div class="chart-gridline"></div>
+                  <div class="chart-bars">
+                    <span style="--bar-height:44%"></span>
+                    <span style="--bar-height:68%"></span>
+                    <span style="--bar-height:46%"></span>
+                    <span style="--bar-height:82%"></span>
+                    <span style="--bar-height:49%"></span>
+                    <span style="--bar-height:52%"></span>
+                    <span style="--bar-height:84%"></span>
+                  </div>
+                </div>
+                <div class="chart-x-axis" aria-hidden="true">
+                  <span>Sep 23</span><span>Sep 24</span><span>Sep 25</span><span>Sep 26</span><span>Sep 27</span><span>Sep 28</span><span>Sep 29</span>
+                </div>
+              </div>
+            </div>
+            <p class="chart-footnote">Illustrative values — live statistics will be added in M5.</p>
+          </article>
+
+          <!-- Budget -->
+          <article class="panel budget-panel" aria-labelledby="budget-title">
+            <div class="panel-heading">
+              <div>
+                <h2 id="budget-title">Budget Progress</h2>
+                <p class="panel-subtitle">Monitor your spending limit</p>
+              </div>
+              <span class="budget-status">Not set</span>
+            </div>
+
+            <div class="budget-overview">
+              <div class="budget-ring" role="img" aria-label="Budget usage is zero percent because no budget has been configured.">
+                <div class="budget-ring-inner">
+                  <strong>0%</strong>
+                  <span>used</span>
+                </div>
+              </div>
+              <div class="budget-breakdown">
+                <div class="budget-line"><span>Spent</span><strong>RWF 0</strong></div>
+                <div class="budget-line"><span>Remaining</span><strong class="positive-value">RWF 0</strong></div>
+                <div class="budget-line"><span>Total Budget</span><strong>Not set</strong></div>
+              </div>
+            </div>
+
+            <div class="budget-progress-track" role="progressbar" aria-label="Budget used" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+              <span class="budget-progress-fill"></span>
+            </div>
+          </article>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <section id="about" class="info-section"
-      aria-labelledby="about-title">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">ABOUT PESAFLOW</p>
-          <h2 id="about-title">Your money, your decisions</h2>
+      <!-- Transactions -->
+      <section id="transactions" class="transactions-section panel" aria-labelledby="transactions-title">
+        <div class="transactions-heading">
+          <div>
+            <p class="eyebrow">YOUR FINANCIAL ACTIVITY</p>
+            <h2 id="transactions-title">Recent Transactions</h2>
+          </div>
+          <a class="text-link" href="#all-transactions">See all <span aria-hidden="true">›</span></a>
         </div>
-      </div>
 
-      <div class="about-card">
-        <div class="about-mark" aria-hidden="true">P</div>
-        <div>
-          <h3>Designed for student life</h3>
-          <p>
-            PesaFlow helps students understand their spending, organize
-            financial records and build healthier budgeting habits.
-          </p>
-          <p class="about-contact">
-            Developer contacts will be added before submission.
-          </p>
+        <div class="transaction-toolbar">
+          <div class="transaction-search">
+            <label class="visually-hidden" for="transaction-search">Search transactions</label>
+            <span aria-hidden="true">⌕</span>
+            <input id="transaction-search" type="search" placeholder="Search (regex supported)...">
+          </div>
+
+          <div class="transaction-filters">
+            <div class="filter-control">
+              <label for="category-filter">Category</label>
+              <select id="category-filter">
+                <option value="all">All categories</option>
+                <option value="Food">Food</option>
+                <option value="Books">Books</option>
+                <option value="Transport">Transport</option>
+                <option value="Entertainment">Entertainment</option>
+                <option value="Fees">Fees</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="filter-control">
+              <label for="transaction-sort">Sort by</label>
+              <select id="transaction-sort">
+                <option value="date-desc">Newest first</option>
+                <option value="date-asc">Oldest first</option>
+                <option value="description-asc">Description A–Z</option>
+                <option value="description-desc">Description Z–A</option>
+                <option value="amount-asc">Amount: low to high</option>
+                <option value="amount-desc">Amount: high to low</option>
+              </select>
+            </div>
+          </div>
         </div>
-      </div>
-    </section>
-  </main>
 
-  <footer class="site-footer">
-    <p>&copy; 2026 PesaFlow Student Finance Tracker</p>
-    <p>Built for smarter student budgeting.</p>
-  </footer>
+        <div class="table-wrapper">
+          <table class="transaction-table">
+            <caption>Transaction records, including categories, amounts and payment status.</caption>
+            <thead>
+              <tr>
+                <th scope="col">Date</th>
+                <th scope="col">Description</th>
+                <th scope="col">Category</th>
+                <th scope="col">Type</th>
+                <th scope="col">Amount (RWF)</th>
+                <th scope="col">Status</th>
+                <th scope="col">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colspan="7" class="empty-state">
+                  <span class="empty-icon" aria-hidden="true">▤</span>
+                  <strong>No transactions yet</strong>
+                  <span>Your financial records will appear here.</span>
+                  <a class="text-link" href="#add-transaction">Add your first transaction</a>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="mobile-transactions" aria-label="Recent transaction cards">
+          <div class="mobile-empty-state">
+            <span class="empty-icon" aria-hidden="true">▤</span>
+            <strong>No transactions yet</strong>
+            <span>Your financial records will appear here.</span>
+            <a class="text-link" href="#add-transaction">Add your first transaction</a>
+          </div>
+        </div>
+
+        <div class="table-footer" id="all-transactions">
+          <p>Showing 0 transactions</p>
+          <div class="pagination" aria-label="Transaction pages">
+            <button type="button" disabled aria-label="Previous page">‹</button>
+            <button type="button" class="current-page" aria-current="page">1</button>
+            <button type="button" disabled aria-label="Next page">›</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Add transaction -->
+      <section id="add-transaction" class="form-section panel" aria-labelledby="add-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">NEW FINANCIAL RECORD</p>
+            <h2 id="add-title">Add Transaction</h2>
+            <p class="panel-subtitle">Record income or an expense.</p>
+          </div>
+        </div>
+
+        <form class="transaction-form">
+          <div class="form-grid">
+            <div class="form-field">
+              <label for="description">Description</label>
+              <input id="description" name="description" type="text" placeholder="e.g. Lunch at cafeteria" required>
+            </div>
+            <div class="form-field">
+              <label for="amount">Amount (RWF)</label>
+              <input id="amount" name="amount" type="number" min="0.01" step="0.01" placeholder="e.g. 4500" required>
+            </div>
+            <div class="form-field">
+              <label for="type">Transaction type</label>
+              <select id="type" name="type" required>
+                <option value="">Choose a type</option>
+                <option value="income">Income</option>
+                <option value="expense">Expense</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label for="category">Category</label>
+              <select id="category" name="category" required>
+                <option value="">Choose a category</option>
+                <option>Food</option><option>Books</option><option>Transport</option>
+                <option>Entertainment</option><option>Fees</option><option>Other</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label for="transaction-date">Transaction date</label>
+              <input id="transaction-date" name="date" type="date" required>
+            </div>
+            <div class="form-field">
+              <label for="status">Payment status</label>
+              <select id="status" name="status" required>
+                <option value="">Choose a status</option>
+                <option value="paid">Paid / completed</option>
+                <option value="planned">Planned / upcoming</option>
+              </select>
+            </div>
+          </div>
+          <p class="form-note">Transaction validation and saving will be implemented in later milestones.</p>
+          <button class="button button-primary" type="button" disabled>Save transaction — coming soon</button>
+        </form>
+      </section>
+
+      <!-- Settings -->
+      <section id="settings" class="info-section panel" aria-labelledby="settings-title">
+        <p class="eyebrow">PERSONAL PREFERENCES</p>
+        <h2 id="settings-title">Settings</h2>
+        <div class="info-card">
+          <span class="info-icon" aria-hidden="true">⚙</span>
+          <div>
+            <h3>Make PesaFlow yours</h3>
+            <p>Budget limits, manual exchange rates, category management and data import/export will be implemented in M6.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- About -->
+      <section id="about" class="info-section panel" aria-labelledby="about-title">
+        <p class="eyebrow">ABOUT THE PROJECT</p>
+        <h2 id="about-title">Your money, your decisions.</h2>
+        <div class="about-card">
+          <span class="about-brand-mark" aria-hidden="true">P</span>
+          <div>
+            <h3>Built for student life</h3>
+            <p>PesaFlow helps students organize their finances, understand their spending habits and make more informed budgeting decisions.</p>
+            <p class="about-contact">Developer contact links will be added before submission.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>© 2026 PesaFlow Student Finance Tracker</p>
+      <p>Built for smarter student budgeting.</p>
+    </footer>
+  </div>
+
+  <!-- Mobile bottom navigation -->
+  <nav class="mobile-bottom-nav" aria-label="Mobile navigation">
+    <a class="mobile-nav-link active" href="#dashboard" aria-current="page">
+      <span aria-hidden="true">⌂</span><span>Dashboard</span>
+    </a>
+    <a class="mobile-nav-link" href="#transactions">
+      <span aria-hidden="true">▤</span><span>Transactions</span>
+    </a>
+    <a class="mobile-add-link" href="#add-transaction" aria-label="Add transaction">
+      <span aria-hidden="true">+</span><span>Add</span>
+    </a>
+    <a class="mobile-nav-link" href="#settings">
+      <span aria-hidden="true">⚙</span><span>Settings</span>
+    </a>
+    <a class="mobile-nav-link" href="#about">
+      <span aria-hidden="true">ⓘ</span><span>About</span>
+    </a>
+  </nav>
 </body>
 </html>
