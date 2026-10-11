@@ -2,10 +2,34 @@ import {
     validateDescription,
     validateAmount,
     validateCategory,
-    validateDate
+    validateDate,
+    isValidTransaction
+
 } from "./validators.js";
 
+import {
+    getTransactions,
+    addTransaction,
+    deleteTransaction,
+    updateTransaction
+} from "./state.js";
+
+import {
+    getVisibleTransactions
+} from "./search.js";
+
+import {
+    renderTransactions
+} from "./ui.js";
+
 const form = document.querySelector(".transaction-form");
+const submitButton = form?.querySelector('button[type="submit"]');
+// Track the transaction currently being edited.
+let editingTransactionId = null;
+
+const searchInput = document.querySelector("#transaction-search");
+const categoryFilter = document.querySelector("#category-filter");
+const sortSelect = document.querySelector("#transaction-sort");
 
 if (form) {
     const feedback = document.querySelector("#form-feedback");
@@ -48,6 +72,40 @@ if (form) {
                     : { valid: false, message: "Choose a payment status." }
         }
     };
+
+    // M4: Update the transaction list using search, filter, and sort settings.
+    function updateTransactions() {
+        const { results, error } = getVisibleTransactions(
+            getTransactions(),
+            {
+                query: searchInput?.value ?? "",
+                category: categoryFilter?.value ?? "all",
+                sortBy: sortSelect?.value ?? "date-desc"
+            }
+        );
+
+        const isFiltered = Boolean(
+            searchInput?.value.trim() ||
+            (categoryFilter && categoryFilter.value !== "all")
+        );
+
+        renderTransactions(results, {
+            filtered: isFiltered,
+            searchError: error
+        });
+
+        if (searchInput) {
+            searchInput.setAttribute("aria-invalid", String(Boolean(error)));
+        }
+    }
+
+    // M4: Respond to changes in search, category, and sorting.
+    searchInput?.addEventListener("input", updateTransactions);
+    categoryFilter?.addEventListener("change", updateTransactions);
+    sortSelect?.addEventListener("change", updateTransactions);
+
+    // Render the initial transaction state.
+    updateTransactions();
 
     function validateField(field) {
         const result = field.validate(field.input.value);
@@ -93,7 +151,129 @@ if (form) {
             return;
         }
 
-        feedback.textContent =
-            "All fields are valid. Saving transactions will be implemented in a later step.";
+
+        // M4: Create and display a transaction after successful validation.
+        const transaction = {
+            description: fields.description.input.value.trim(),
+            amount: fields.amount.input.value,
+            type: fields.type.input.value,
+            category: fields.category.input.value,
+            date: fields.date.input.value,
+            status: fields.status.input.value
+        };
+
+        if (!isValidTransaction(transaction)) {
+            feedback.textContent =
+                "The transaction is invalid. Please review your entries.";
+            return;
+        }
+
+        // M4: Update an existing transaction or create a new one.
+        if (editingTransactionId !== null) {
+            const updated = updateTransaction(editingTransactionId, transaction);
+
+            if (!updated) {
+                feedback.textContent = "Could not update the transaction.";
+                return;
+            }
+
+            editingTransactionId = null;
+            feedback.textContent = "Transaction updated successfully.";
+        } else {
+            addTransaction(transaction);
+            feedback.textContent = "Transaction added successfully.";
+        }
+
+        form.reset();
+
+        if (submitButton) {
+            submitButton.textContent = "Validate transaction";
+        }
+
+        Object.values(fields).forEach((field) => {
+            field.error.textContent = "";
+            field.input.setAttribute("aria-invalid", "false");
+        });
+
+        updateTransactions();
     });
+
+    // M4: Load an existing transaction into the form for editing.
+    document.addEventListener("click", (event) => {
+        const editButton = event.target.closest("[data-edit-id]");
+
+        if (!editButton) {
+            return;
+        }
+
+        const transactionId = editButton.dataset.editId;
+
+        const transaction = getTransactions().find(
+            (item) => item.id === transactionId
+        );
+
+        if (!transaction) {
+            return;
+        }
+
+        editingTransactionId = transaction.id;
+
+        if (submitButton) {
+            submitButton.textContent = "Save changes";
+        }
+
+        fields.description.input.value = transaction.description;
+        fields.amount.input.value = transaction.amount;
+        fields.type.input.value = transaction.type;
+        fields.category.input.value = transaction.category;
+        fields.date.input.value = transaction.date;
+        fields.status.input.value = transaction.status;
+
+        Object.values(fields).forEach((field) => {
+            validateField(field);
+        });
+
+        feedback.textContent =
+            "Editing transaction. Update the fields and submit the form.";
+
+        form.scrollIntoView({ behavior: "smooth", block: "start" });
+        fields.description.input.focus();
+    });
+
+    // M4: Delete a transaction from desktop or mobile view.
+    document.addEventListener("click", (event) => {
+        const deleteButton = event.target.closest("[data-delete-id]");
+
+        if (!deleteButton) {
+            return;
+        }
+
+        const transactionId = deleteButton.dataset.deleteId;
+
+        const confirmed = window.confirm(
+            "Are you sure you want to delete this transaction?"
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        const deleted = deleteTransaction(transactionId);
+
+        if (deleted) {
+            if (editingTransactionId === transactionId) {
+                editingTransactionId = null;
+                form.reset();
+
+                Object.values(fields).forEach((field) => {
+                    field.error.textContent = "";
+                    field.input.setAttribute("aria-invalid", "false");
+                });
+            }
+
+            feedback.textContent = "Transaction deleted successfully.";
+            updateTransactions();
+        }
+    });
+
 }
