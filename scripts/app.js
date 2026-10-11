@@ -19,10 +19,31 @@ import {
 } from "./search.js";
 
 import {
-    renderTransactions
+    renderTransactions,
+    updateDashboard,
+    updateSpendingTrend,
+    updateBudgetProgress,
+    updateSpendingBreakdown
 } from "./ui.js";
 
 const form = document.querySelector(".transaction-form");
+
+// M5: Monthly budget settings
+const budgetForm = document.querySelector("#budget-form");
+const budgetInput = document.querySelector("#monthly-budget");
+const budgetError = document.querySelector("#budget-error");
+const budgetFeedback = document.querySelector("#budget-feedback");
+
+const BUDGET_STORAGE_KEY = "pesaFlow.monthlyBudget";
+
+let monthlyBudget = Number(
+    localStorage.getItem(BUDGET_STORAGE_KEY)
+) || 0;
+
+if (budgetInput && monthlyBudget > 0) {
+    budgetInput.value = String(monthlyBudget);
+}
+
 const submitButton = form?.querySelector('button[type="submit"]');
 // Track the transaction currently being edited.
 let editingTransactionId = null;
@@ -30,6 +51,7 @@ let editingTransactionId = null;
 const searchInput = document.querySelector("#transaction-search");
 const categoryFilter = document.querySelector("#category-filter");
 const sortSelect = document.querySelector("#transaction-sort");
+
 
 if (form) {
     const feedback = document.querySelector("#form-feedback");
@@ -73,6 +95,55 @@ if (form) {
         }
     };
 
+
+    /**
+     * M5: Save and apply the monthly budget.
+     */
+    if (budgetForm) {
+        budgetForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+
+            const value = budgetInput.value.trim();
+            const budget = Number(value);
+
+            if (
+                value === "" ||
+                !Number.isFinite(budget) ||
+                budget <= 0
+            ) {
+                budgetError.textContent =
+                    "Enter a budget greater than zero.";
+                budgetInput.setAttribute("aria-invalid", "true");
+                budgetFeedback.textContent = "";
+                budgetInput.focus();
+                return;
+            }
+
+            monthlyBudget = budget;
+
+            localStorage.setItem(
+                BUDGET_STORAGE_KEY,
+                String(monthlyBudget)
+            );
+
+            budgetError.textContent = "";
+            budgetInput.setAttribute("aria-invalid", "false");
+            budgetFeedback.textContent = "Monthly budget saved successfully.";
+
+            const transactions = getTransactions();
+
+            updateDashboard(transactions, monthlyBudget);
+            updateBudgetProgress(transactions, monthlyBudget);
+        });
+
+        budgetInput.addEventListener("input", () => {
+            budgetError.textContent = "";
+            budgetFeedback.textContent = "";
+            budgetInput.setAttribute("aria-invalid", "false");
+        });
+    }
+
+
     // M4: Update the transaction list using search, filter, and sort settings.
     function updateTransactions() {
         const { results, error } = getVisibleTransactions(
@@ -97,7 +168,16 @@ if (form) {
         if (searchInput) {
             searchInput.setAttribute("aria-invalid", String(Boolean(error)));
         }
+
+        // M5: Refresh dashboard statistics and visualizations.
+        const transactions = getTransactions();
+
+        updateDashboard(transactions, monthlyBudget);
+        updateSpendingTrend(transactions);
+        updateBudgetProgress(transactions, monthlyBudget);
+        updateSpendingBreakdown(transactions);
     }
+
 
     // M4: Respond to changes in search, category, and sorting.
     searchInput?.addEventListener("input", updateTransactions);
@@ -209,9 +289,8 @@ if (form) {
         const transactionId = editButton.dataset.editId;
 
         const transaction = getTransactions().find(
-            (item) => item.id === transactionId
+            (item) => String(item.id) === String(transactionId)
         );
-
         if (!transaction) {
             return;
         }

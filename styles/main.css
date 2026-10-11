@@ -1996,3 +1996,72 @@ input[aria-invalid="true"]:focus-visible,
 select[aria-invalid="true"]:focus-visible {
   outline-color: #b42318;
 }
+
+
+/* M5: Spending Breakdown */
+.spending-breakdown-panel {
+    margin-top: 1.25rem;
+}
+
+.spending-breakdown-list {
+    display: grid;
+    gap: 1.25rem;
+    margin-top: 1.5rem;
+}
+
+.breakdown-item {
+    min-width: 0;
+}
+
+.breakdown-item-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.6rem;
+}
+
+.breakdown-category {
+    color: #102849;
+    font-weight: 600;
+}
+
+.breakdown-item-heading strong {
+    color: #102849;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.breakdown-progress-track {
+    width: 100%;
+    height: 0.6rem;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #e8edf3;
+}
+
+.breakdown-progress-fill {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: #d9ad4f;
+    transition: width 0.3s ease;
+}
+
+.breakdown-percentage {
+    margin: 0.4rem 0 0;
+    color: #64748b;
+    font-size: 0.8rem;
+}
+
+.breakdown-empty {
+    margin: 0;
+    color: #64748b;
+    line-height: 1.6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .breakdown-progress-fill {
+        transition: none;
+    }
+}

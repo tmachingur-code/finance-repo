@@ -3,7 +3,12 @@
  * M4: Transaction state management
  */
 
-let transactions = [];
+import {
+    loadTransactions,
+    saveTransactions
+} from "./storage.js";
+
+let transactions = loadTransactions();
 let nextId = 1;
 
 /**
@@ -32,6 +37,7 @@ export function addTransaction(transaction) {
   };
 
   transactions = [...transactions, newTransaction];
+  saveTransactions(transactions);
 
   return { ...newTransaction };
 }
@@ -45,6 +51,7 @@ export function deleteTransaction(id) {
   transactions = transactions.filter(
     (transaction) => transaction.id !== String(id)
   );
+  saveTransactions(transactions);
 
   return transactions.length < originalLength;
 }
@@ -67,6 +74,8 @@ export function updateTransaction(id, updates) {
     id: transactions[index].id
   };
 
+  saveTransactions(transactions);
+
   return true;
 }
 
@@ -80,6 +89,7 @@ export function setTransactions(items) {
   }
 
   transactions = items.map((transaction) => ({ ...transaction }));
+  saveTransactions(transactions);
 
   const highestId = transactions.reduce((maximum, transaction) => {
     const numericId = Number(transaction.id);
