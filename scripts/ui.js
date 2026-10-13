@@ -1,3 +1,4 @@
+import { formatCurrency } from "./currency.js";
 /**
  * PesaFlow — Student Finance Tracker
  * M4: Transaction rendering
@@ -59,15 +60,12 @@ export function updateDashboard(transactions, budget = 0) {
         ".summary-card .summary-caption"
     );
 
-    const formatCurrency = (amount) =>
-        `RWF ${new Intl.NumberFormat("en-RW", {
-            maximumFractionDigits: 2
-        }).format(amount)}`;
+    const formatDashboardAmount = formatAmount;
 
     if (summaryValues.length >= 4) {
-        summaryValues[0].textContent = formatCurrency(incomeTotal);
-        summaryValues[1].textContent = formatCurrency(expenseTotal);
-        summaryValues[2].textContent = formatCurrency(remainingBudget);
+        summaryValues[0].textContent = formatDashboardAmount(incomeTotal);
+        summaryValues[1].textContent = formatDashboardAmount(expenseTotal);
+        summaryValues[2].textContent = formatDashboardAmount(remainingBudget);
         summaryValues[3].textContent = topCategory;
     }
 
@@ -134,7 +132,7 @@ export function updateSpendingTrend(transactions) {
             }
         });
 
-        // Keep the vertical axis consistent with the chart's 150K maximum.
+    // Keep the vertical axis consistent with the chart's 150K maximum.
     const chartMaximum = 150000;
 
     chart.innerHTML = days.map((day) => {
@@ -158,7 +156,8 @@ export function updateSpendingTrend(transactions) {
     ).join("");
 
     if (chartUnit) {
-        chartUnit.textContent = "RWF";
+        chartUnit.textContent =
+            document.querySelector("#display-currency")?.value || "RWF";
     }
 
     if (footnote) {
@@ -187,10 +186,7 @@ export function updateBudgetProgress(transactions, budget = 0) {
     const progressTrack = budgetPanel.querySelector(".budget-progress-track");
     const progressFill = budgetPanel.querySelector(".budget-progress-fill");
 
-    const formatCurrency = (amount) =>
-        `RWF ${new Intl.NumberFormat("en-RW", {
-            maximumFractionDigits: 2
-        }).format(amount)}`;
+    const formatCurrency = (amount) => formatAmount(amount);
 
     const now = new Date();
 
@@ -252,7 +248,7 @@ export function updateBudgetProgress(transactions, budget = 0) {
         breakdown[0].textContent = formatAmount(monthlyExpenses);
         breakdown[1].textContent = budget > 0
             ? formatAmount(remaining)
-            : "RWF 0";
+            : formatAmount(0);
         breakdown[2].textContent = budget > 0
             ? formatAmount(budget)
             : "Not set";
@@ -280,57 +276,57 @@ export function updateBudgetProgress(transactions, budget = 0) {
 }
 
 export function updateSpendingBreakdown(transactions) {
-  const container = document.querySelector("#spending-breakdown");
+    const container = document.querySelector("#spending-breakdown");
 
-  if (!container) return;
+    if (!container) return;
 
-  const now = new Date();
-  const currentMonth = now.getMonth();
-  const currentYear = now.getFullYear();
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
 
-  const monthlyExpenses = transactions.filter((transaction) => {
-    if (transaction.type !== "expense") return false;
+    const monthlyExpenses = transactions.filter((transaction) => {
+        if (transaction.type !== "expense") return false;
 
-    const parts = transaction.date.split("-");
+        const parts = transaction.date.split("-");
 
-    if (parts.length !== 3) return false;
+        if (parts.length !== 3) return false;
 
-    const year = Number(parts[0]);
-    const month = Number(parts[1]) - 1;
+        const year = Number(parts[0]);
+        const month = Number(parts[1]) - 1;
 
-    return year === currentYear && month === currentMonth;
-  });
+        return year === currentYear && month === currentMonth;
+    });
 
-  const categoryTotals = {};
+    const categoryTotals = {};
 
-  monthlyExpenses.forEach((transaction) => {
-    const category = transaction.category;
-    categoryTotals[category] =
-      (categoryTotals[category] || 0) + Number(transaction.amount);
-  });
+    monthlyExpenses.forEach((transaction) => {
+        const category = transaction.category;
+        categoryTotals[category] =
+            (categoryTotals[category] || 0) + Number(transaction.amount);
+    });
 
-  const categories = Object.entries(categoryTotals)
-    .sort((a, b) => b[1] - a[1]);
+    const categories = Object.entries(categoryTotals)
+        .sort((a, b) => b[1] - a[1]);
 
-  const totalExpenses = categories.reduce(
-    (total, [, amount]) => total + amount,
-    0
-  );
+    const totalExpenses = categories.reduce(
+        (total, [, amount]) => total + amount,
+        0
+    );
 
-  if (categories.length === 0 || totalExpenses === 0) {
-    container.innerHTML = `
+    if (categories.length === 0 || totalExpenses === 0) {
+        container.innerHTML = `
       <p class="breakdown-empty">
         No expenses recorded for this month yet.
       </p>
     `;
-    return;
-  }
+        return;
+    }
 
-  container.innerHTML = categories
-    .map(([category, amount]) => {
-      const percentage = (amount / totalExpenses) * 100;
+    container.innerHTML = categories
+        .map(([category, amount]) => {
+            const percentage = (amount / totalExpenses) * 100;
 
-      return `
+            return `
         <div class="breakdown-item">
           <div class="breakdown-item-heading">
             <span class="breakdown-category">${escapeHTML(category)}</span>
@@ -358,8 +354,8 @@ export function updateSpendingBreakdown(transactions) {
           </div>
         </div>
       `;
-    })
-    .join("");
+        })
+        .join("");
 }
 
 
@@ -378,13 +374,9 @@ function escapeHTML(value) {
     });
 }
 
-
 function formatAmount(amount) {
-    return `RWF ${new Intl.NumberFormat("en-RW", {
-        maximumFractionDigits: 2
-    }).format(Number(amount) || 0)}`;
+    return formatCurrency(amount);
 }
-
 
 function formatDate(dateString) {
     const date = new Date(`${dateString}T00:00:00`);

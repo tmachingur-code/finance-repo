@@ -4,14 +4,14 @@ import {
     validateCategory,
     validateDate,
     isValidTransaction
-
 } from "./validators.js";
 
 import {
     getTransactions,
     addTransaction,
     deleteTransaction,
-    updateTransaction
+    updateTransaction,
+    setTransactions
 } from "./state.js";
 
 import {
@@ -26,7 +26,33 @@ import {
     updateSpendingBreakdown
 } from "./ui.js";
 
+import {
+    saveExchangeRates,
+    getCurrencySettings
+} from "./currency.js";
+
 const form = document.querySelector(".transaction-form");
+let refreshTransactions = () => {};
+
+
+const currencySelect = document.querySelector("#display-currency");
+
+if (currencySelect) {
+    const savedCurrency = localStorage.getItem("pesaFlow.displayCurrency");
+
+    if (["RWF", "USD", "EUR"].includes(savedCurrency)) {
+        currencySelect.value = savedCurrency;
+    }
+
+    currencySelect.addEventListener("change", () => {
+        localStorage.setItem(
+            "pesaFlow.displayCurrency",
+            currencySelect.value
+        );
+
+        refreshTransactions();
+    });
+}
 
 // M5: Monthly budget settings
 const budgetForm = document.querySelector("#budget-form");
@@ -184,6 +210,57 @@ if (form) {
     categoryFilter?.addEventListener("change", updateTransactions);
     sortSelect?.addEventListener("change", updateTransactions);
 
+    /**
+     * M6: Save exchange-rate settings.
+     */
+    const currencyForm = document.querySelector("#currency-form");
+    const usdRateInput = document.querySelector("#rate-usd");
+    const eurRateInput = document.querySelector("#rate-eur");
+    const currencyError = document.querySelector("#currency-error");
+    const currencyFeedback = document.querySelector("#currency-feedback");
+
+    if (currencyForm && usdRateInput && eurRateInput) {
+        const { rates } = getCurrencySettings();
+
+        usdRateInput.value = String(rates.USD);
+        eurRateInput.value = String(rates.EUR);
+
+        currencyForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+
+            currencyError.textContent = "";
+            currencyFeedback.textContent = "";
+
+            const usdRate = Number(usdRateInput.value);
+            const eurRate = Number(eurRateInput.value);
+
+            if (
+                !Number.isFinite(usdRate) ||
+                !Number.isFinite(eurRate) ||
+                usdRate <= 0 ||
+                eurRate <= 0
+            ) {
+                currencyError.textContent =
+                    "Enter valid exchange rates greater than zero.";
+                return;
+            }
+
+            const saved = saveExchangeRates(usdRate, eurRate);
+
+            if (!saved) {
+                currencyError.textContent =
+                    "Unable to save the exchange rates.";
+                return;
+            }
+
+            currencyFeedback.textContent =
+                "Exchange rates saved successfully.";
+
+            updateTransactions();
+        });
+    }
+    refreshTransactions = updateTransactions;
+
     // Render the initial transaction state.
     updateTransactions();
 
@@ -235,7 +312,7 @@ if (form) {
         // M4: Create and display a transaction after successful validation.
         const transaction = {
             description: fields.description.input.value.trim(),
-            amount: fields.amount.input.value,
+            amount: Number(fields.amount.input.value),
             type: fields.type.input.value,
             category: fields.category.input.value,
             date: fields.date.input.value,
@@ -354,5 +431,252 @@ if (form) {
             updateTransactions();
         }
     });
+}
 
+// M6: Export and import JSON backups.
+const exportButton = document.querySelector("#export-json");
+const importInput = document.querySelector("#import-json");
+const backupFeedback = document.querySelector("#backup-feedback");
+
+const BACKUP_VERSION = 1;
+const RATES_STORAGE_KEY = "pesaFlow.exchangeRates";
+
+if (exportButton && backupFeedback) {
+    exportButton.addEventListener("click", () => {
+        const backup = {
+            app: "PesaFlow",
+            version: BACKUP_VERSION,
+            exportedAt: new Date().toISOString(),
+            transactions: getTransactions(),
+            settings: {
+                monthlyBudget: Number(
+                    localStorage.getItem(BUDGET_STORAGE_KEY)
+                ) || 0,
+                displayCurrency:
+                    localStorage.getItem("pesaFlow.displayCurrency") || "RWF",
+                exchangeRates: JSON.parse(
+                    localStorage.getItem(RATES_STORAGE_KEY) ||
+                    '{"USD":1450,"EUR":1600}'
+                )
+            }
+        };
+
+        const blob = new Blob(
+            [JSON.stringify(backup, null, 2)],
+            { type: "application/json" }
+        );
+
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+
+        link.href = url;
+        link.download = `pesaflow-backup-${new Date()
+            .toISOString()
+            .slice(0, 10)}.json`;
+
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+
+        backupFeedback.textContent = "Backup exported successfully.";
+    });
+}
+
+if (importInput && backupFeedback) {
+    importInput.addEventListener("change", async () => {
+        const file = importInput.files?.[0];
+
+        if (!file) {
+            return;
+        }
+
+        backupFeedback.textContent = "";
+
+        try {
+            const backup = JSON.parse(await file.text());
+
+            if (
+                !backup ||
+                backup.app !== "PesaFlow" ||
+                backup.version !== BACKUP_VERSION ||
+                !Array.isArray(backup.transactions) ||
+                !backup.settings ||
+                typeof backup.settings !== "object"
+            ) {
+                throw new Error("This is not a valid PesaFlow backup.");
+            }
+
+
+            const seenIds = new Set();
+
+            const validTransactions = backup.transactions.every(
+                (transaction) => {
+                    if (
+                        !transaction ||
+                        typeof transaction !== "object" ||
+                        Array.isArray(transaction)
+                    ) {
+                        return false;
+                    }
+
+                    const {
+                        id,
+                        description,
+                        amount,
+                        type,
+                        category,
+                        date,
+                        createdAt,
+                        updatedAt,
+                        status
+                    } = transaction;
+
+                    const validId =
+                        typeof id === "string" &&
+                        id.trim().length > 0 &&
+                        !seenIds.has(id);
+
+                    if (validId) {
+                        seenIds.add(id);
+                    }
+
+                    const validDate = (value) => {
+                        if (
+                            typeof value !== "string" ||
+                            !/^\d{4}-\d{2}-\d{2}$/.test(value)
+                        ) {
+                            return false;
+                        }
+
+                        const parsed = new Date(`${value}T00:00:00.000Z`);
+
+                        return (
+                            !Number.isNaN(parsed.getTime()) &&
+                            parsed.toISOString().slice(0, 10) === value
+                        );
+                    };
+
+                    const validTimestamp = (value) =>
+                        typeof value === "string" &&
+                        !Number.isNaN(Date.parse(value)) &&
+                        value === new Date(value).toISOString();
+
+                    return (
+                        validId &&
+                        typeof description === "string" &&
+                        description.trim().length > 0 &&
+                        typeof amount === "number" &&
+                        Number.isFinite(amount) &&
+                        amount > 0 &&
+                        ["income", "expense"].includes(type) &&
+                        typeof category === "string" &&
+                        category.trim().length > 0 &&
+                        validDate(date) &&
+                        validTimestamp(createdAt) &&
+                        validTimestamp(updatedAt) &&
+                        ["paid", "planned"].includes(status)
+                    );
+                }
+            );
+
+
+            
+            const {
+                monthlyBudget: importedBudget,
+                displayCurrency,
+                exchangeRates
+            } = backup.settings;
+
+            const validSettings =
+                Number.isFinite(Number(importedBudget)) &&
+                Number(importedBudget) >= 0 &&
+                ["RWF", "USD", "EUR"].includes(displayCurrency) &&
+                exchangeRates &&
+                typeof exchangeRates === "object" &&
+                Number.isFinite(Number(exchangeRates.USD)) &&
+                Number(exchangeRates.USD) > 0 &&
+                Number.isFinite(Number(exchangeRates.EUR)) &&
+                Number(exchangeRates.EUR) > 0;
+
+            if (!validTransactions || !validSettings) {
+                throw new Error(
+                    "The backup contains invalid transactions or settings."
+                );
+            }
+
+            const confirmed = window.confirm(
+                "Importing this backup will replace your current transactions and settings. Continue?"
+            );
+
+            if (!confirmed) {
+                backupFeedback.textContent = "Import cancelled.";
+                return;
+            }
+
+            // Restore the transactions.
+            setTransactions(backup.transactions);
+
+            // Restore the monthly budget.
+            localStorage.setItem(
+                BUDGET_STORAGE_KEY,
+                String(Number(importedBudget))
+            );
+
+            // Restore the display currency.
+            localStorage.setItem(
+                "pesaFlow.displayCurrency",
+                displayCurrency
+            );
+
+            // Restore exchange rates.
+            localStorage.setItem(
+                RATES_STORAGE_KEY,
+                JSON.stringify({
+                    USD: Number(exchangeRates.USD),
+                    EUR: Number(exchangeRates.EUR)
+                })
+            );
+
+            // Update the settings displayed in the interface.
+            if (budgetInput) {
+                budgetInput.value = String(Number(importedBudget));
+            }
+
+            const importCurrencySelect =
+                document.querySelector("#display-currency");
+
+            if (importCurrencySelect) {
+                importCurrencySelect.value = displayCurrency;
+            }
+
+            const usdInput = document.querySelector("#rate-usd");
+            const eurInput = document.querySelector("#rate-eur");
+
+            if (usdInput) {
+                usdInput.value = String(Number(exchangeRates.USD));
+            }
+
+            if (eurInput) {
+                eurInput.value = String(Number(exchangeRates.EUR));
+            }
+
+            // Update the outer budget variable and refresh the interface.
+            monthlyBudget = Number(importedBudget);
+            refreshTransactions();
+
+
+            backupFeedback.textContent =
+                "Backup imported successfully.";
+
+        } catch (error) {
+            backupFeedback.textContent =
+                error instanceof SyntaxError
+                    ? "The selected file is not valid JSON."
+                    : error.message || "Could not import this backup.";
+
+        } finally {
+            importInput.value = "";
+        }
+    });
 }
