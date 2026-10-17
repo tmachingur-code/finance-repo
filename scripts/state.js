@@ -1,13 +1,17 @@
-
 /**
- * PesaFlow — Student Finance Tracker
+ * MariFlow - Student Finance Tracker
  * M6: Transaction state management with unique IDs and timestamps.
  */
 
-import {
+import{
     loadTransactions,
     saveTransactions
 } from "./storage.js";
+
+import {
+    isRealDate,
+    isValidTransaction
+} from "./validators.js";
 
 function createTransactionId() {
     return `rec_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -15,6 +19,20 @@ function createTransactionId() {
 
 function getTimestamp() {
     return new Date().toISOString();
+}
+
+function isValidStateTransaction(transaction) {
+    return(
+        isValidTransaction(transaction) && 
+        ["paid", "planned"].includes(transaction.status)
+    );
+}
+
+function isValidTimestamp(value) {
+    return (
+        typeof value === "string" &&
+        !Number.isNaN(Date.parse(value))
+    );
 }
 
 function normalizeTransactions(items) {
@@ -42,7 +60,7 @@ function normalizeTransactions(items) {
                 !["income", "expense"].includes(transaction.type) ||
                 typeof transaction.category !== "string" ||
                 !transaction.category.trim() ||
-                typeof transaction.date !== "string" ||
+                !isRealDate(transaction.date) ||
                 !["paid", "planned"].includes(transaction.status)
             ) {
                 return null;
@@ -64,18 +82,14 @@ function normalizeTransactions(items) {
 
             seenIds.add(id);
 
-            const validTimestamp = (value) =>
-                typeof value === "string" &&
-                !Number.isNaN(Date.parse(value));
-
             return {
                 ...transaction,
                 id,
                 amount,
-                createdAt: validTimestamp(transaction.createdAt)
+                createdAt: isValidTimestamp(transaction.createdAt)
                     ? transaction.createdAt
                     : now,
-                updatedAt: validTimestamp(transaction.updatedAt)
+                updatedAt: isValidTimestamp(transaction.updatedAt)
                     ? transaction.updatedAt
                     : now
             };
@@ -84,7 +98,6 @@ function normalizeTransactions(items) {
 }
 
 let transactions = normalizeTransactions(loadTransactions());
-let nextId = 1;
 
 // Save the normalized data so the migration persists.
 saveTransactions(transactions);
@@ -119,6 +132,10 @@ export function addTransaction(transaction) {
         status: transaction.status
     };
 
+    if (!isValidStateTransaction(newTransaction)) {
+        throw new TypeError ("Invalid transaction data.");
+    }
+
     transactions = [...transactions, newTransaction];
     saveTransactions(transactions);
 
@@ -131,38 +148,61 @@ export function addTransaction(transaction) {
 export function deleteTransaction(id) {
     const originalLength = transactions.length;
 
-    transactions = transactions.filter(
+    const updatedTransactions = transactions.filter(
         (transaction) => String(transaction.id) !== String(id)
     );
 
+    if (updatedTransactions.length === originalLength) {
+        return false;
+    }
+
+    transactions = updatedTransactions;
     saveTransactions(transactions);
 
-    return transactions.length < originalLength;
+    return true;
 }
-
-/**
+/*
  * Update a transaction while preserving its ID and creation timestamp.
  */
-export function updateTransaction(id, updates) {
+export function updateTransaction(id,updates) {
     const index = transactions.findIndex(
-        (transaction) => String(transaction.id) === String(id)
+        (transaction) =>String(transaction.id) === String(id)
     );
 
     if (index === -1) {
         return false;
     }
 
+    if (
+        !updates ||
+        typeof updates !== "object" ||
+        Array.isArray(updates)
+    ) {
+        throw new TypeError("Updates must be an object");
+    }
+
     const existing = transactions[index];
 
-
-    transactions[index] = {
+    const candidate = {
         ...existing,
         ...updates,
         amount: Number(updates.amount ?? existing.amount),
         id: existing.id,
-        createdAt: existing.createdAt || getTimestamp(),
+        createdAt: existing.createdAt,
         updatedAt: getTimestamp()
     };
+
+    if (
+        !isValidStateTransaction(candidate) ||
+        !isValidTimestamp(candidate.createdAt) ||
+        !isValidTimestamp(candidate.updatedAt)
+    ) {
+        throw new TypeError("Invalid updated transaction data.");
+    }
+
+    transactions = transactions.map((transaction, currentIndex) =>
+        currentIndex === index ? candidate: transaction
+    );
 
     saveTransactions(transactions);
 
@@ -175,23 +215,72 @@ export function updateTransaction(id, updates) {
  */
 export function setTransactions(items) {
     if (!Array.isArray(items)) {
-        throw new TypeError("Transactions must be provided as an array.");
+        throw new TypeError(
+            "Transaction must be provided as an array."
+        );
     }
 
-    transactions = items.map((transaction) => ({
-        ...transaction,
-        amount: Number(transaction.amount)
-    }));
-    saveTransactions(transactions);
+    const seenIds = new Set();
 
-    nextId = transactions.length + 1;
+    const validatedTransactions = items.map((item) => {
+        if (
+            !item ||
+            typeof item !== "object" ||
+            Array.isArray(item)
+        ) {
+            throw new TypeError(
+                "Every transaction must be an object."
+            );
+        }
+
+        const candidate = {
+            ...item,
+            amount: Number(item.amount)
+        };
+
+        if (!isValidStateTransaction(candidate)) {
+            throw new TypeError(
+                "Imported data contains an invalid transaction."
+            );
+        }
+
+        if (
+            typeof candidate.id !== "string" ||
+            !candidate.id.trim()
+        ) {
+            throw new TypeError(
+                "Every transaction must have a valid ID."
+            );
+        }
+
+        if (seenIds.has(candidate.id)) {
+            throw new TypeError(
+                "Imported data contains duplicate transaction IDs."
+            );
+        }
+
+        if (
+            !isValidTimestamp(candidate.createdAt) ||
+            !isValidTimestamp(candidate.updatedAt)
+        ) {
+            throw new TypeError(
+                "Every transaction must have valid timestamps."
+            );
+        }
+
+        seenIds.add(candidate.id);
+
+        return candidate;
+});
+
+//Replace the current sate only after every record passes.
+transactions = validatedTransactions;
+saveTransactions(transactions);
 }
-
 /**
  * Remove all transactions from memory and persistent storage.
  */
 export function clearTransactions() {
     transactions = [];
-    nextId = 1;
     saveTransactions(transactions);
 }
