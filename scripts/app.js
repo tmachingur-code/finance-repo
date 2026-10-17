@@ -32,13 +32,13 @@ import {
 } from "./currency.js";
 
 const form = document.querySelector(".transaction-form");
-let refreshTransactions = () => {};
-
+let refreshTransactions = () => { };
 
 const currencySelect = document.querySelector("#display-currency");
+const CURRENCY_STORAGE_KEY = "mariflow.displayCurrency";
 
 if (currencySelect) {
-    const savedCurrency = localStorage.getItem("pesaFlow.displayCurrency");
+    const savedCurrency = localStorage.getItem(CURRENCY_STORAGE_KEY);
 
     if (["RWF", "USD", "EUR"].includes(savedCurrency)) {
         currencySelect.value = savedCurrency;
@@ -46,7 +46,7 @@ if (currencySelect) {
 
     currencySelect.addEventListener("change", () => {
         localStorage.setItem(
-            "pesaFlow.displayCurrency",
+            CURRENCY_STORAGE_KEY,
             currencySelect.value
         );
 
@@ -60,7 +60,7 @@ const budgetInput = document.querySelector("#monthly-budget");
 const budgetError = document.querySelector("#budget-error");
 const budgetFeedback = document.querySelector("#budget-feedback");
 
-const BUDGET_STORAGE_KEY = "pesaFlow.monthlyBudget";
+const BUDGET_STORAGE_KEY = "mariflow.monthlyBudget";
 
 let monthlyBudget = Number(
     localStorage.getItem(BUDGET_STORAGE_KEY)
@@ -121,7 +121,6 @@ if (form) {
         }
     };
 
-
     /**
      * M5: Save and apply the monthly budget.
      */
@@ -172,8 +171,10 @@ if (form) {
 
     // M4: Update the transaction list using search, filter, and sort settings.
     function updateTransactions() {
+        const transactions = getTransactions();
+
         const { results, error } = getVisibleTransactions(
-            getTransactions(),
+            transactions,
             {
                 query: searchInput?.value ?? "",
                 category: categoryFilter?.value ?? "all",
@@ -196,8 +197,6 @@ if (form) {
         }
 
         // M5: Refresh dashboard statistics and visualizations.
-        const transactions = getTransactions();
-
         updateDashboard(transactions, monthlyBudget);
         updateSpendingTrend(transactions);
         updateBudgetProgress(transactions, monthlyBudget);
@@ -249,7 +248,7 @@ if (form) {
 
             if (!saved) {
                 currencyError.textContent =
-                    "Unable to save the exchange rates.";
+                    "Sorry unable to save the exchange rates.";
                 return;
             }
 
@@ -326,19 +325,34 @@ if (form) {
         }
 
         // M4: Update an existing transaction or create a new one.
-        if (editingTransactionId !== null) {
-            const updated = updateTransaction(editingTransactionId, transaction);
+        try {
+            if (editingTransactionId !== null) {
+                const updated = updateTransaction(
+                    editingTransactionId,
+                    transaction
+                );
 
-            if (!updated) {
-                feedback.textContent = "Could not update the transaction.";
-                return;
+                if (!updated) {
+                    feedback.textContent =
+                        "Could not update the transaction.";
+                    return;
+                }
+                editingTransactionId = null;
+                feedback.textContent =
+                    "Transaction updated successfully."
+            } else {
+                addTransaction(transaction);
+
+                feedback.textContent =
+                    "Transaction added successfully."
             }
-
-            editingTransactionId = null;
-            feedback.textContent = "Transaction updated successfully.";
-        } else {
-            addTransaction(transaction);
-            feedback.textContent = "Transaction added successfully.";
+        }
+        catch (error) {
+            feedback.textContent =
+                error instanceof Error
+                    ? error.message
+                    : "Could not save the transaction.";
+            return;
         }
 
         form.reset();
@@ -438,13 +452,113 @@ const exportButton = document.querySelector("#export-json");
 const importInput = document.querySelector("#import-json");
 const backupFeedback = document.querySelector("#backup-feedback");
 
+function isValidBackupTransactions(transaction, seenIds) {
+    if (
+        !transaction ||
+        typeof transaction !== "object" ||
+        Array.isArray(transaction)
+    ) {
+        return false;
+    }
+
+    const {
+        id,
+        description,
+        amount,
+        type,
+        category,
+        date,
+        createdAt,
+        updatedAt,
+        status
+    } = transaction;
+
+    const validId =
+        typeof id == "string" &&
+        id.trim().length > 0 &&
+        !seenIds.has(id);
+
+    const validTimestamp = (value) => {
+        if (
+            typeof value !== "string" ||
+            !Number.isFinite(Date.parse(value))
+        ) {
+            return false;
+        }
+
+        try {
+            return new Date(value).toISOString() === value;
+        } catch {
+            return false;
+        }
+    };
+
+    const validFields = isValidTransaction({
+        description,
+        amount,
+        type,
+        category,
+        date,
+    });
+
+    const valid =
+        validId &&
+        validFields &&
+        typeof amount === "number" &&
+        Number.isFinite(amount) &&
+        amount > 0 &&
+        ["paid", "planned"].includes(status) &&
+        validTimestamp(createdAt) &&
+        validTimestamp(updatedAt);
+
+    if (valid) {
+        seenIds.add(id);
+    }
+
+    return valid;
+}
+
 const BACKUP_VERSION = 1;
-const RATES_STORAGE_KEY = "pesaFlow.exchangeRates";
+const RATES_STORAGE_KEY = "mariflow.exchangeRates";
+
+function getStoredExchangeRates() {
+    const defaults = {
+        USD: 1460,
+        EUR: 1600
+    };
+
+    try {
+        const savedRates = localStorage.getItem(
+            RATES_STORAGE_KEY
+        );
+
+        if (!savedRates) {
+            return defaults;
+        }
+
+        const parseRates = JSON.parse(savedRates);
+
+        const USD = Number(parseRates?.USD);
+        const EUR = Number(parseRates?.EUR);
+
+        if (
+            !Number.isFinite(USD) ||
+            USD <= 0 ||
+            !Number.isFinite(EUR) ||
+            EUR <= 0
+        ) {
+            return defaults;
+        }
+        return { USD, EUR };
+    } catch {
+        return defaults;
+    }
+}
 
 if (exportButton && backupFeedback) {
     exportButton.addEventListener("click", () => {
         const backup = {
-            app: "PesaFlow",
+            app: "MariFlow",
             version: BACKUP_VERSION,
             exportedAt: new Date().toISOString(),
             transactions: getTransactions(),
@@ -453,11 +567,8 @@ if (exportButton && backupFeedback) {
                     localStorage.getItem(BUDGET_STORAGE_KEY)
                 ) || 0,
                 displayCurrency:
-                    localStorage.getItem("pesaFlow.displayCurrency") || "RWF",
-                exchangeRates: JSON.parse(
-                    localStorage.getItem(RATES_STORAGE_KEY) ||
-                    '{"USD":1450,"EUR":1600}'
-                )
+                    localStorage.getItem(CURRENCY_STORAGE_KEY) || "RWF",
+                exchangeRates: getStoredExchangeRates()
             }
         };
 
@@ -470,7 +581,7 @@ if (exportButton && backupFeedback) {
         const link = document.createElement("a");
 
         link.href = url;
-        link.download = `pesaflow-backup-${new Date()
+        link.download = `mariflow-backup-${new Date()
             .toISOString()
             .slice(0, 10)}.json`;
 
@@ -494,94 +605,40 @@ if (importInput && backupFeedback) {
         backupFeedback.textContent = "";
 
         try {
+            if (!file.name.toLowerCase().endsWith(".json")) {
+                throw new Error("Please select a JSON backup file.");
+            }
+
+            const MAX_BACKUP_SIZE = 5*1024*1024;
+
+            if (file.size > MAX_BACKUP_SIZE) {
+                throw new Error(
+                    "The backup file must be 5 MB or smaller."
+                );
+            }
+
             const backup = JSON.parse(await file.text());
 
             if (
                 !backup ||
-                backup.app !== "PesaFlow" ||
+                backup.app !== "MariFlow" ||
                 backup.version !== BACKUP_VERSION ||
                 !Array.isArray(backup.transactions) ||
                 !backup.settings ||
                 typeof backup.settings !== "object"
             ) {
-                throw new Error("This is not a valid PesaFlow backup.");
+                throw new Error("This is not a valid MariFlow backup.");
             }
 
 
             const seenIds = new Set();
 
             const validTransactions = backup.transactions.every(
-                (transaction) => {
-                    if (
-                        !transaction ||
-                        typeof transaction !== "object" ||
-                        Array.isArray(transaction)
-                    ) {
-                        return false;
-                    }
+                (transaction) =>
+                    isValidBackupTransactions(transaction, seenIds)
 
-                    const {
-                        id,
-                        description,
-                        amount,
-                        type,
-                        category,
-                        date,
-                        createdAt,
-                        updatedAt,
-                        status
-                    } = transaction;
-
-                    const validId =
-                        typeof id === "string" &&
-                        id.trim().length > 0 &&
-                        !seenIds.has(id);
-
-                    if (validId) {
-                        seenIds.add(id);
-                    }
-
-                    const validDate = (value) => {
-                        if (
-                            typeof value !== "string" ||
-                            !/^\d{4}-\d{2}-\d{2}$/.test(value)
-                        ) {
-                            return false;
-                        }
-
-                        const parsed = new Date(`${value}T00:00:00.000Z`);
-
-                        return (
-                            !Number.isNaN(parsed.getTime()) &&
-                            parsed.toISOString().slice(0, 10) === value
-                        );
-                    };
-
-                    const validTimestamp = (value) =>
-                        typeof value === "string" &&
-                        !Number.isNaN(Date.parse(value)) &&
-                        value === new Date(value).toISOString();
-
-                    return (
-                        validId &&
-                        typeof description === "string" &&
-                        description.trim().length > 0 &&
-                        typeof amount === "number" &&
-                        Number.isFinite(amount) &&
-                        amount > 0 &&
-                        ["income", "expense"].includes(type) &&
-                        typeof category === "string" &&
-                        category.trim().length > 0 &&
-                        validDate(date) &&
-                        validTimestamp(createdAt) &&
-                        validTimestamp(updatedAt) &&
-                        ["paid", "planned"].includes(status)
-                    );
-                }
             );
 
-
-            
             const {
                 monthlyBudget: importedBudget,
                 displayCurrency,
@@ -625,7 +682,7 @@ if (importInput && backupFeedback) {
 
             // Restore the display currency.
             localStorage.setItem(
-                "pesaFlow.displayCurrency",
+                CURRENCY_STORAGE_KEY,
                 displayCurrency
             );
 
